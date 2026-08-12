@@ -37,20 +37,18 @@ function exitFailed() {
     exit 1
 }
 
-
-if ! sshpass -p "$PASS" ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" "$ID@$HOST" -p $SSHPORT "bash -c \"mkdir -p \\\"$PYSHELL_PATH\\\"\""; then 
+if ! echo "$PASS" | sshpass -p "$PASS" ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" "$ID@$HOST" -p $SSHPORT "sudo -S -p '' bash -c \"mkdir -p \\\"$PYSHELL_PATH\\\"\""; then 
     exitFailed "Remote directory creation failed"
 fi
 
-if ! cat "$PYSHELLDIR/pyshell.py" | sshpass -p "$PASS" ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" $ID@$HOST -p $SSHPORT "cat > '$PYSHELL_PATH/pyshell.py'"; then
+if ! (echo "$PASS"; cat "$PYSHELLDIR/pyshell.py") | sshpass -p "$PASS" ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" $ID@$HOST -p $SSHPORT "sudo -S -p '' tee '$PYSHELL_PATH/pyshell.py' > /dev/null"; then
     exitFailed "Script upload failed"
 fi
 
-if ! cat "$SCRIPT_DIR/pyshell.service.template" | sshpass -p "$PASS" ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" $ID@$HOST -p $SSHPORT "cat > '$PYSHELL_PATH/pyshell.service.template'"; then
+if ! (echo "$PASS"; cat "$SCRIPT_DIR/pyshell.service.template") | sshpass -p "$PASS" ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" $ID@$HOST -p $SSHPORT "sudo -S -p '' tee '$PYSHELL_PATH/pyshell.service.template' > /dev/null"; then
     exitFailed "Service file upload failed"
 fi
 
-if ! sshpass -p "$PASS" ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" $ID@$HOST -p $SSHPORT 'bash -s' < "$SCRIPT_DIR/remotedeploy.sh" "$PYSHELL_PATH" $PYSHELL_ID $PYSHELL_KEY $PYSHELL_HOST $PYSHELL_PORT $PYSHELL_TIMEOUT $PYSHELL_FIREWALL; then
+if ! sshpass -p "$PASS" ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" $ID@$HOST -p $SSHPORT 'bash -s' < "$SCRIPT_DIR/remotedeploy.sh" "$PYSHELL_PATH" $PYSHELL_ID $PYSHELL_KEY $PYSHELL_HOST $PYSHELL_PORT $PYSHELL_TIMEOUT $PYSHELL_FIREWALL "$PASS"; then
     exitFailed "Script remote deployment failed"
 fi
-
